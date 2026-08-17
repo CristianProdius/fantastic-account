@@ -161,7 +161,7 @@
 - Create: `companies/global-fantastic/00_Identitate/COMPANIE.md`
 
 - [x] Document how Cristian adds the server to Grok/Claude/Codex. Mihail never runs a command.
-- [ ] Commit: `docs: MCP install notes and company identity`
+- [x] Commit: `docs: MCP install notes and company identity`
 
 ---
 

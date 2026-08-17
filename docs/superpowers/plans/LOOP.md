@@ -1,32 +1,31 @@
 # Implementation loop state
 
-Last updated: 2026-08-17 (onboarding IBAN → bank_accounts)
-Status: foundation + June 2026 tests + IBAN onboarding path shipped
+Last updated: 2026-08-17 (MCP install notes + identity)
+Status: foundation complete; waiting on live 1C/bank drops and Cristian wiring MCP
 
 ## Shipped
 
 - Isolated sibling at `/Users/cristian/Fantastic Account/` (Postgres **54339**, never Prodius).
-- Spec + plan written. 20 tests passing (`pnpm test` in `accounting/`).
+- Spec + plan written. 21 tests passing (`pnpm test` in `accounting/`).
 - Live import: GF 82 declarations / 20 journals / 4 employees; RP 18 declarations / 17 journals.
-- MCP tools, onboarding, teacher, 1C drop-folder, bank drop-folder, month-close.
-- IPC21 parser falls back to dinamicTable2 totals when table1 is empty.
-- Fantastic June 2026: `whatDoIOwe` (TVA −155.57, SIMM 32355.52 from A/2025, IPC21 5000/1200) + month-close (TVA12+IPC21, bank block).
-- Onboarding `bank_iban_mdl` parses MD IBANs (spaces OK) and upserts `bank_accounts` (MDL / 2421). Skip does not insert. `import_bank_folder` then waits for CSV, not IBAN.
+- MCP tools, onboarding (IBAN → `bank_accounts`), teacher, 1C/bank drop-folders, month-close.
+- Fantastic June 2026 dues + month-close tests.
+- README now has copy-paste MCP install for Claude Desktop, Claude Code, Codex, Grok.
+- Company identity files list tax facts, drop folders, missing IBAN.
 
 ## Next (do these, one cluster per wake)
 
-1. Add MCP server to Grok/Claude config if Cristian wants Mihail to open it tomorrow (`mcp.json` is ready).
-2. When Mihail drops 1C Excel/CSV into `04_Export_1C/`, run `import_one_c_exports`.
-3. When real IBANs/statements exist, save onboarding IBAN (now wired) and import `02_Extrase_Bancare/`.
-4. Improve RSF1 line mapping if a 1C trial balance arrives (replace the snapshot plug).
-5. Do not touch `/Users/cristian/ProdiusEnterprise`.
+1. Cristian: merge `mcp.json` into Claude/Grok/Codex if Mihail should open it (do not replace other servers).
+2. When Mihail drops 1C Excel/CSV into `04_Export_1C/`, run `import_one_c_exports` and improve trial-balance mapping.
+3. When real IBANs/statements exist, save onboarding IBAN and import `02_Extrase_Bancare/`.
+4. Do not touch `/Users/cristian/ProdiusEnterprise`.
 
 ## This wake
 
-- Cluster: `bank_accounts` insert path when onboarding saves an IBAN.
-- Parser: `parseMoldovanIbanAnswer` + upsert on `bank_iban_mdl` (invalid IBAN rejected before save).
-- Status now includes `bankAccounts`. Folders still empty — no live IBAN invented.
-- Verify: 20/20 passing against `fantastic_accounting_test` on 54339.
+- Cluster: polish docs / MCP install notes (no 1C files in `04_Export_1C/`).
+- README install paths + isolation table; COMPANIE.md facts; CLAUDE.md IBAN phrase.
+- Test: `mcp.json` DSN is 54339 / `fantastic_accounting`, not Prodius or `*_test`.
+- Verify: 21/21 passing against `fantastic_accounting_test` on 54339.
 
 ## Verify
 

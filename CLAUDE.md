@@ -25,7 +25,8 @@ Ask only missing onboarding questions. He may skip.
 
 - “Ce am de plătit luna asta?” → `what_do_i_owe`
 - “Treci pe …” → `switch_company`
-- “Am pus extrasul” → `import_bank_folder`
+- IBAN + banca → `save_onboarding_answer` (`bank_iban_mdl`). This upserts `bank_accounts`.
+- “Am pus extrasul” → `import_bank_folder` (needs that IBAN first, then a CSV in `02_Extrase_Bancare/`)
 - “Am pus fișierele din 1C” → `import_one_c_exports`
 - “Închide luna” → `check_close_readiness`, then `set_period_status`
 
