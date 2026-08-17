@@ -119,7 +119,7 @@
 - [x] Detect `.xlsx/.xls/.csv` in `04_Export_1C/`. Record each file. Classify by filename keywords (`balanta`, `jurnal`, `conturi`, `banca`, `contrapart`, `salar`).
 - [x] If a trial-balance sheet has account code + debit/credit columns, post/replace a snapshot journal `1C balanta YYYY-MM-DD`.
 - [x] Missing files return a Romanian next-step from the ghid, not an error.
-- [ ] Commit: `feat: optional 1C Excel import`
+- [x] Commit: `feat: import 1C CSV trial balance snapshots`
 
 ### Task 8: MCP server
 

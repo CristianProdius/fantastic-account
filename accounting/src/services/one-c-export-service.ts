@@ -1,10 +1,16 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import type { AppDb } from '../db/client.js';
-import { oneCExportFiles } from '../db/schema.js';
+import { accounts, oneCExportFiles } from '../db/schema.js';
+import {
+  dateFromOneCFileName,
+  parseCsvTrialBalance,
+} from '../importers/one-c/parse-trial-balance.js';
 import { oneCExportDir } from '../paths.js';
 import { getCompany } from './company-service.js';
 import { postBalancedEntry } from './journal-service.js';
+
+export { parseCsvTrialBalance } from '../importers/one-c/parse-trial-balance.js';
 
 const KEYWORDS: Array<[string, string]> = [
   ['balanta', 'trial_balance'],
@@ -27,26 +33,15 @@ export const classifyOneCFile = (fileName: string): string => {
   return 'unknown';
 };
 
-const parseCsvTrialBalance = (text: string) => {
-  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  const rows: Array<{ accountCode: string; debit: number; credit: number }> = [];
-  for (const line of lines) {
-    const parts = line.split(/[;,]/).map((part) => part.trim().replace(/^"|"$/g, ''));
-    if (parts.length < 3) continue;
-    const accountCode = parts[0] ?? '';
-    if (!/^\d{3,5}$/.test(accountCode)) continue;
-    const debit = Number((parts[1] ?? '0').replace(/\s/g, '').replace(',', '.'));
-    const credit = Number((parts[2] ?? '0').replace(/\s/g, '').replace(',', '.'));
-    if (!Number.isFinite(debit) || !Number.isFinite(credit)) continue;
-    if (debit === 0 && credit === 0) continue;
-    rows.push({ accountCode, debit, credit });
-  }
-  return rows;
-};
+const money = (value: number) => value.toFixed(2);
 
-export const importOneCExports = async (db: AppDb, companySlug: string) => {
+export const importOneCExports = async (
+  db: AppDb,
+  companySlug: string,
+  options?: { directory?: string },
+) => {
   const { company } = await getCompany(db, companySlug);
-  const directory = oneCExportDir(company.slug);
+  const directory = options?.directory ?? oneCExportDir(company.slug);
   let names: string[] = [];
   try {
     names = (await readdir(directory)).filter((name) =>
@@ -67,6 +62,7 @@ export const importOneCExports = async (db: AppDb, companySlug: string) => {
     };
   }
 
+  const chart = new Set((await db.select({ code: accounts.code }).from(accounts)).map((row) => row.code));
   let journals = 0;
   const files: Array<{ fileName: string; kind: string; note: string }> = [];
 
@@ -77,37 +73,61 @@ export const importOneCExports = async (db: AppDb, companySlug: string) => {
 
     if (kind === 'trial_balance' && extname(fileName).toLowerCase() === '.csv') {
       const text = await readFile(filePath, 'utf8');
-      const rows = parseCsvTrialBalance(text);
-      const usable = rows.filter((row) => ['123', '221', '2421', '332', '5342', '731', '611', '713', '225', '311', '521', '531', '533'].includes(row.accountCode));
-      if (usable.length >= 2) {
-        const lines = usable.flatMap((row) => {
+      const parsed = parseCsvTrialBalance(text);
+      const known = parsed.filter((row) => chart.has(row.accountCode));
+      const skipped = parsed
+        .filter((row) => !chart.has(row.accountCode))
+        .map((row) => row.accountCode);
+
+      if (known.length >= 2) {
+        const lines = known.flatMap((row) => {
           const out = [];
           if (row.debit > 0) {
-            out.push({ accountCode: row.accountCode, debit: row.debit.toFixed(2), credit: '0.00' });
+            out.push({ accountCode: row.accountCode, debit: money(row.debit), credit: '0.00' });
           }
           if (row.credit > 0) {
-            out.push({ accountCode: row.accountCode, debit: '0.00', credit: row.credit.toFixed(2) });
+            out.push({ accountCode: row.accountCode, debit: '0.00', credit: money(row.credit) });
           }
           return out;
         });
+        const debit = lines.reduce((sum, line) => sum + Number(line.debit), 0);
+        const credit = lines.reduce((sum, line) => sum + Number(line.credit), 0);
+        const delta = Number((debit - credit).toFixed(2));
+        if (Math.abs(delta) > 0.009 && chart.has('999')) {
+          if (delta > 0) {
+            lines.push({ accountCode: '999', debit: '0.00', credit: money(delta) });
+          } else {
+            lines.push({ accountCode: '999', debit: money(-delta), credit: '0.00' });
+          }
+        }
+
+        const asOf = dateFromOneCFileName(fileName) ?? new Date().toISOString().slice(0, 10);
         try {
           const result = await postBalancedEntry(db, {
             companyId: company.slug,
-            date: new Date().toISOString().slice(0, 10),
-            description: `1C balanta ${fileName}`,
+            date: asOf,
+            description: `1C balanta ${asOf}`,
             reference: `1c-balanta:${fileName}`,
             source: 'one_c_export',
+            replace: true,
             lines,
           });
           if (result.created) journals += 1;
-          note = `Importat ${usable.length} rânduri din balanță`;
+          note = `Importat ${known.length} conturi din balanța ${asOf}`;
+          if (skipped.length > 0) {
+            note += `. Sărite (nu sunt în plan): ${skipped.join(', ')}`;
+          }
+          if (Math.abs(delta) > 0.009) {
+            note += `. Diferența ${money(Math.abs(delta))} MDL a mers pe 999`;
+          }
         } catch (error) {
           note = `Balanța nu s-a putut posta: ${error instanceof Error ? error.message : String(error)}`;
         }
       } else {
-        note = 'CSV recunoscut ca balanță, dar coloanele nu sunt cont/debit/credit. Lasă-l aici, îl citim manual.';
+        note =
+          'CSV recunoscut ca balanță, dar nu am găsit cel puțin două conturi din plan (coloane cont + sold final debit/credit).';
       }
-    } else if (extname(fileName).toLowerCase() === '.xlsx') {
+    } else if (extname(fileName).toLowerCase() === '.xlsx' || extname(fileName).toLowerCase() === '.xls') {
       note = 'Excel salvat. Îl indexăm. Pentru import automat, salvează și o copie CSV.';
     }
 

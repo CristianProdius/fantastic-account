@@ -29,11 +29,15 @@ export const postBalancedEntry = async (
     reference: string;
     source: 'tax' | 'snapshot' | 'payroll' | 'one_c_export' | 'manual';
     lines: JournalLineInput[];
+    replace?: boolean;
   },
 ) => {
   const existing = await findEntryByReference(db, input.companyId, input.reference);
-  if (existing) {
+  if (existing && !input.replace) {
     return { entry: existing, created: false };
+  }
+  if (existing && input.replace) {
+    await db.delete(journalEntries).where(eq(journalEntries.id, existing.id));
   }
 
   const debit = input.lines.reduce((sum, line) => sum + Number(line.debit), 0);
