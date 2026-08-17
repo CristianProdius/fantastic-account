@@ -57,5 +57,26 @@ describe('parseDeclarationXml', () => {
     expect(parsed.month).toBe(12);
     const people = parsed.extracted.employees as Array<{ name: string }>;
     expect(people.map((person) => person.name)).toContain('POPESCU MIHAIL');
+    expect(parsed.extracted.payrollBase).toBe(7612.31);
+    expect(parsed.extracted.incomeTax).toBe(381.27);
+    expect(parsed.extracted.social).toBe(685.11);
+  });
+
+  it('parses Global Fantastic IPC21 June 2026 from dinamicTable2 totals', async () => {
+    const xml = await readFile(gfXml('28088870.xml'), 'utf8');
+    const parsed = parseDeclarationXml(xml);
+    expect(parsed.formType).toBe('ipc21');
+    expect(parsed.period).toBe('L/06/2026');
+    expect(parsed.year).toBe(2026);
+    expect(parsed.month).toBe(6);
+    expect(parsed.extracted.payrollBase).toBe(5000);
+    expect(parsed.extracted.incomeTax).toBe(1200);
+    expect(parsed.extracted.social).toBe(0);
+    const people = parsed.extracted.employees as Array<{ name: string; idnp: string }>;
+    expect(people).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'POPESCHU MIHAIL', idnp: '2002002121680' }),
+      ]),
+    );
   });
 });

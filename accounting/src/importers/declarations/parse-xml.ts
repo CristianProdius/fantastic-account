@@ -94,9 +94,10 @@ const extractIpc21Employees = (xml: string) => {
 };
 
 const extractIpc21 = (xml: string) => ({
-  payrollBase: numberTag(xml, 'r61c4') ?? numberTag(xml, 'r11c4'),
-  incomeTax: numberTag(xml, 'r61c5') ?? numberTag(xml, 'r11c5'),
-  social: numberTag(xml, 'r61c6') ?? numberTag(xml, 'r11c6'),
+  // Later filings leave table1 empty; employee-register totals live in dinamicTable2.
+  payrollBase: numberTag(xml, 'r61c4') ?? numberTag(xml, 'r11c4') ?? numberTag(xml, 'tot2c9'),
+  incomeTax: numberTag(xml, 'r61c5') ?? numberTag(xml, 'r11c5') ?? numberTag(xml, 'tot2c11'),
+  social: numberTag(xml, 'r61c6') ?? numberTag(xml, 'r11c6') ?? numberTag(xml, 'tot2c10'),
   employees: extractIpc21Employees(xml),
 });
 

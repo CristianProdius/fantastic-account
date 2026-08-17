@@ -151,7 +151,7 @@
 
 - [x] Per company, ensure obligation instances for the month (TVA always; IPC21 if employees; SIMM only in December as YTD reminder plus annual instance in March).
 - [x] `check_close_readiness` fails if unclassified bank txns or pending required obligations exist.
-- [ ] Commit: `feat: SIMM/VAT month close`
+- [x] Commit: `test: Fantastic June 2026 dues and month-close`
 
 ### Task 11: Wire MCP configs + identity notes
 
