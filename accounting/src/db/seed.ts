@@ -76,9 +76,11 @@ export const seedObligationTemplates = [
   { companyId: 'global-fantastic', name: 'TVA12', category: 'vat', frequency: 'monthly', applicableMonths: null },
   { companyId: 'global-fantastic', name: 'IPC21', category: 'payroll', frequency: 'monthly', applicableMonths: null },
   { companyId: 'global-fantastic', name: 'SIMM24', category: 'simm', frequency: 'annual', applicableMonths: [3] },
+  { companyId: 'global-fantastic', name: 'SIMM24 YTD', category: 'simm', frequency: 'annual', applicableMonths: [12] },
   { companyId: 'global-fantastic', name: 'RSF1', category: 'annual', frequency: 'annual', applicableMonths: [3] },
   { companyId: 'rare-people', name: 'TVA12', category: 'vat', frequency: 'monthly', applicableMonths: null },
   { companyId: 'rare-people', name: 'SIMM24', category: 'simm', frequency: 'annual', applicableMonths: [3] },
+  { companyId: 'rare-people', name: 'SIMM24 YTD', category: 'simm', frequency: 'annual', applicableMonths: [12] },
   { companyId: 'rare-people', name: 'RSF1', category: 'annual', frequency: 'annual', applicableMonths: [3] },
 ];
 

@@ -122,6 +122,41 @@ describe('month close', () => {
     expect(closed.pendingObligations).toHaveLength(0);
   });
 
+  it('opens a SIMM YTD reminder in December, not in June', async () => {
+    const december = await ensureObligationInstances(db, {
+      companyId: 'global-fantastic',
+      year: 2026,
+      month: 12,
+    });
+    expect(december.applicable).toBe(3);
+
+    const names = (
+      await db
+        .select({ name: monthlyObligationTemplates.name, month: monthlyObligationInstances.month })
+        .from(monthlyObligationInstances)
+        .innerJoin(
+          monthlyObligationTemplates,
+          eq(monthlyObligationInstances.templateId, monthlyObligationTemplates.id),
+        )
+        .where(eq(monthlyObligationInstances.month, 12))
+    ).map((row) => row.name);
+    expect(names.sort()).toEqual(['IPC21', 'SIMM24 YTD', 'TVA12']);
+
+    const june = await ensureObligationInstances(db, {
+      companyId: 'rare-people',
+      year: 2026,
+      month: 6,
+    });
+    expect(june.applicable).toBe(1);
+
+    const decemberRp = await ensureObligationInstances(db, {
+      companyId: 'rare-people',
+      year: 2026,
+      month: 12,
+    });
+    expect(decemberRp.applicable).toBe(2);
+  });
+
   it('fails June close when an unclassified bank line exists', async () => {
     await db.insert(bankAccounts).values({
       iban: 'MD24AG000000022511054710',

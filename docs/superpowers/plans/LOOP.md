@@ -1,16 +1,15 @@
 # Implementation loop state
 
-Last updated: 2026-08-17 (1C CSV trial-balance import)
-Status: foundation complete; 1C CSV balanță ready; waiting on live drops + MCP wire-up
+Last updated: 2026-08-17 (December SIMM YTD reminder)
+Status: foundation complete; waiting on live 1C/bank drops + Cristian MCP wire-up
 
 ## Shipped
 
 - Isolated sibling at `/Users/cristian/Fantastic Account/` (Postgres **54339**, never Prodius).
-- Spec + plan written. 27 tests passing (`pnpm test` in `accounting/`).
+- Spec + plan written. 28 tests passing (`pnpm test` in `accounting/`).
 - Live import: GF 82 declarations / 20 journals / 4 employees; RP 18 declarations / 17 journals.
-- MCP tools, onboarding (IBAN → `bank_accounts`), teacher, 1C/bank drop-folders, month-close.
-- Fantastic June 2026 dues + month-close tests. MCP install notes.
-- 1C CSV balanță: headered sold-final columns, `;` vs `,` delimiter, `242.1`→`2421`, date from filename, replace on re-import, unknown accounts skipped, 999 plug. Live `04_Export_1C/` still empty.
+- MCP, onboarding IBAN → `bank_accounts`, 1C CSV balanță, month-close, June 2026 dues tests, MCP docs.
+- Month-close templates: TVA/IPC monthly; SIMM24 + RSF1 in March; **SIMM24 YTD in December**. June unchanged.
 
 ## Next (do these, one cluster per wake)
 
@@ -21,9 +20,9 @@ Status: foundation complete; 1C CSV balanță ready; waiting on live drops + MCP
 
 ## This wake
 
-- Cluster: better 1C CSV trial-balance import (no live samples; fixtures only).
-- Parser + import tests in tmp dirs. Did not write into company `04_Export_1C/`.
-- Verify: 27/27 passing against `fantastic_accounting_test` on 54339.
+- Listed clusters 1–4 already shipped; `04_Export_1C/` and bank folders still empty.
+- Filled the Task 10 hole: December SIMM YTD reminder (GF: TVA+IPC+SIMM YTD; RP: TVA+SIMM YTD).
+- Verify: 28/28 passing against `fantastic_accounting_test` on 54339.
 
 ## Verify
 
