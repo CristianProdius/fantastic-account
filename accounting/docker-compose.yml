@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: fantastic-accounting-db-1
+    environment:
+      POSTGRES_DB: fantastic_accounting
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "54339:5432"
+    volumes:
+      - fantastic_accounting_pgdata:/var/lib/postgresql/data
+
+volumes:
+  fantastic_accounting_pgdata:
