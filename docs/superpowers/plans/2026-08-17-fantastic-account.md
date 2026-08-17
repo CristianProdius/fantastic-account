@@ -141,7 +141,7 @@
 
 - [x] Import CSV/Excel dropped in `02_Extrase_Bancare/`. Dedup by `(company_id, bank_iban, fingerprint)`.
 - [x] Unclassified transactions stay in a review list exposed as an MCP resource.
-- [ ] Commit: `feat: bank statement drop-folder import`
+- [x] Commit: `feat: upsert bank_accounts when onboarding saves an IBAN`
 
 ### Task 10: Month close checklist
 

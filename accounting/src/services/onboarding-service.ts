@@ -1,7 +1,37 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDb } from '../db/client.js';
-import { onboardingAnswers, taxProfiles } from '../db/schema.js';
+import { bankAccounts, onboardingAnswers, taxProfiles } from '../db/schema.js';
 import { getCompany } from './company-service.js';
+
+const MD_IBAN_RE = /MD[0-9]{2}[A-Z0-9]{20}/i;
+
+const BANK_CODE_NAMES: Record<string, string> = {
+  AG: 'MAIB',
+  VI: 'Victoriabank',
+  ML: 'MICB',
+  EX: 'Eximbank',
+  MO: 'OTP / Mobiasbanca',
+};
+
+const NAMED_BANKS: Array<{ pattern: RegExp; name: string }> = [
+  { pattern: /\bmaib\b|agroind/i, name: 'MAIB' },
+  { pattern: /\bvictoriabank\b|\bvb\b/i, name: 'Victoriabank' },
+  { pattern: /\bmicb\b|moldindcon/i, name: 'MICB' },
+  { pattern: /\beximbank\b/i, name: 'Eximbank' },
+  { pattern: /\botp\b|mobias/i, name: 'OTP / Mobiasbanca' },
+];
+
+export const parseMoldovanIbanAnswer = (
+  value: string,
+): { iban: string; bankName: string } | null => {
+  const compact = value.replace(/[\s-]/g, '').toUpperCase();
+  const match = compact.match(MD_IBAN_RE);
+  if (!match) return null;
+  const iban = match[0];
+  const fromText = NAMED_BANKS.find((bank) => bank.pattern.test(value))?.name;
+  const fromCode = BANK_CODE_NAMES[iban.slice(4, 6)];
+  return { iban, bankName: fromText ?? fromCode ?? 'Bancă necunoscută' };
+};
 
 export const ONBOARDING_QUESTIONS = [
   {
@@ -93,13 +123,52 @@ export const getOnboardingStatus = async (db: AppDb, companyId: string) => {
   );
 
   const pending = questions.filter((question) => !question.answered);
+  const accounts = await db.select().from(bankAccounts).where(eq(bankAccounts.companyId, companyId));
   return {
     companyId,
     complete: pending.length === 0,
     pendingCount: pending.length,
     nextQuestion: pending[0] ?? null,
     questions,
+    bankAccounts: accounts.map((row) => ({
+      iban: row.iban,
+      bankName: row.bankName,
+      currency: row.currency,
+      accountCode: row.accountCode,
+    })),
   };
+};
+
+const upsertMdlBankAccount = async (db: AppDb, companyId: string, answer: string) => {
+  const parsed = parseMoldovanIbanAnswer(answer);
+  if (!parsed) {
+    throw new Error(
+      'Nu am recunoscut un IBAN moldovenesc (începe cu MD, 24 caractere). Exemplu: MD24AG000000022511054710 MAIB',
+    );
+  }
+
+  await db
+    .insert(bankAccounts)
+    .values({
+      iban: parsed.iban,
+      companyId,
+      currency: 'MDL',
+      name: 'Cont curent MDL',
+      bankName: parsed.bankName,
+      accountCode: '2421',
+    })
+    .onConflictDoUpdate({
+      target: bankAccounts.iban,
+      set: {
+        companyId,
+        currency: 'MDL',
+        name: 'Cont curent MDL',
+        bankName: parsed.bankName,
+        accountCode: '2421',
+      },
+    });
+
+  return parsed;
 };
 
 export const saveOnboardingAnswer = async (
@@ -114,6 +183,10 @@ export const saveOnboardingAnswer = async (
   const value = input.skip ? 'skipped' : (input.value?.trim() ?? '');
   if (!input.skip && !value) {
     throw new Error('Trimite un răspuns sau spune că sari peste.');
+  }
+
+  if (input.questionKey === 'bank_iban_mdl' && !input.skip) {
+    await upsertMdlBankAccount(db, input.companyId, value);
   }
 
   await db
