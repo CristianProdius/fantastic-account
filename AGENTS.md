@@ -4,6 +4,17 @@ This system is the accounting backend for **GLOBAL FANTASTIC S.R.L.** and
 **RARE PEOPLE S.R.L.** (administrator: Mihail Popescu). It is a sibling of
 Prodius accounting. Treat the two as unrelated machines.
 
+## First clone on a new Mac
+
+If the user says initiate / pornește / setup, or Docker / the database
+is not running, follow `CLAUDE.md` → **First-run (initiate)** or run
+`bash scripts/initiate.sh`. That script installs missing tools, starts
+Postgres on **54339**, imports declarations, builds the MCP server, and
+writes `.mcp.json` with **this machine’s** path.
+
+Do not leave Cristian’s `/Users/cristian/Fantastic Account/` path in
+MCP config on someone else’s Mac.
+
 ## CRITICAL: never touch Prodius
 
 Do not open, migrate, compose, query, or delete anything under

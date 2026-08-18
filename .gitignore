@@ -6,3 +6,4 @@ dist
 accounting/node_modules
 accounting/dist
 accounting/.env
+.mcp.json

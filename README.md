@@ -1,101 +1,58 @@
 # Fantastic Account
 
-Accounting for **GLOBAL FANTASTIC S.R.L.** and **RARE PEOPLE S.R.L.**
-Mihail Popescu talks to it in Romanian through Claude, Grok, or Codex (MCP).
+Contabilitate pentru **GLOBAL FANTASTIC S.R.L.** și **RARE PEOPLE S.R.L.**
+Repo **privat**. Mihail vorbește cu Claude / Grok / Codex în română.
 
-This is a **sibling** of Prodius accounting. Separate folder, Docker volume,
-Postgres port, and database. Never mix them.
+## Mihail — ce faci tu
 
-| | Fantastic Account | Prodius (do not touch) |
-|---|---|---|
-| Folder | `/Users/cristian/Fantastic Account/` | `/Users/cristian/ProdiusEnterprise/` |
-| Postgres | `127.0.0.1:54339` | `127.0.0.1:54329` |
-| Database | `fantastic_accounting` | `prodius_accounting` |
-| MCP name | `fantastic-accounting` | `prodius-accounting` |
+1. Cristian te invită pe GitHub la acest repo.
+2. Pe Mac: instalează [Claude](https://claude.ai/download) (sau Grok / Codex).
+3. Clonează repo-ul (Claude poate face asta) într-un folder al tău, de exemplu Desktop.
+4. Deschide folderul în Claude și scrie exact:
 
-## Cristian — start once
-
-Needs Docker, Node 22, pnpm. Mihail never runs these.
-
-```bash
-cd "/Users/cristian/Fantastic Account/accounting"
-cp .env.example .env
-pnpm install
-pnpm db:up
-pnpm db:setup
-pnpm import:declarations
-pnpm test
-pnpm build
+```
+Pornește proiectul. Citește CLAUDE.md și fă initiate.
 ```
 
-Leave the container running (`fantastic-accounting-db-1` on **54339**).
-After code changes, run `pnpm build` again — MCP loads `dist/`, not `src/`.
+Tu nu instalezi Postgres cu mâna. Claude instalează Docker Desktop și
+Node dacă lipsesc, pornește baza, importă declarațiile, și leagă MCP.
+Dacă trebuie să apeși pe ceva (Docker Desktop, login GitHub), îți spune
+în română.
 
-Safe later: `pnpm db:migrate`, `pnpm db:seed`, `pnpm import:declarations`,
-`docker compose up -d` / `stop` / `start`.
-
-Never: `docker compose down -v`, drop `fantastic_accounting`, or any command
-against port **54329** / `prodius_accounting`. Tests use
-`fantastic_accounting_test` only.
-
-## Cristian — add the MCP server
-
-Snippet: [`mcp.json`](mcp.json). Merge it. Do **not** replace a file that
-already has other servers (for example `prodius-accounting`).
-
-`DATABASE_URL` in the snippet is the **live** ledger (`fantastic_accounting`
-on 54339). Never point MCP at `*_test` or at 54329.
-
-### Claude Desktop (macOS)
-
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json`.
-Add the `fantastic-accounting` block from `mcp.json` next to any existing
-servers. Restart Claude Desktop.
-
-### Claude Code
-
-Copy `mcp.json` to `.mcp.json` in this repo (same shape), or merge the
-`fantastic-accounting` server into an existing `.mcp.json`. Restart the
-session. Do not remove `prodius-accounting` if it is already listed
-elsewhere — they are different servers.
-
-### Codex
-
-In `~/.codex/config.toml`:
-
-```toml
-[mcp_servers.fantastic-accounting]
-command = "node"
-args = ["/Users/cristian/Fantastic Account/accounting/dist/src/index.js"]
-
-[mcp_servers.fantastic-accounting.env]
-DATABASE_URL = "postgres://postgres:postgres@127.0.0.1:54339/fantastic_accounting"
-```
-
-### Grok
-
-Open Grok MCP / connectors settings and paste `mcp.json` (or merge the
-`fantastic-accounting` server). Restart Grok.
-
-### Check it worked
-
-In a new chat: “treci pe Fantastic” then “ce am de plătit luna asta?”.
-If the server cannot start, confirm Docker is up and `pnpm build` was run.
-
-## Mihail
-
-Open Grok, Claude, or Codex. Talk in Romanian. You do not need this README.
+După aia, în chat:
 
 - „Treci pe Fantastic” / „Treci pe Rare People”
 - „Ce am de plătit luna asta?”
-- IBAN + banca (onboarding) — then extras CSV into `02_Extrase_Bancare/`
-- Export 1C Excel into `04_Export_1C/` (see `companies/_shared/ghid-export-1c.md`)
+- IBAN + banca
+- pui extrasul CSV în `companies/<firma>/02_Extrase_Bancare/`
+- pui exportul 1C Excel în `companies/<firma>/04_Export_1C/`
 - „Închide luna”
+
+Ghid 1C: `companies/_shared/ghid-export-1c.md`.
+
+## Agent — first run
+
+Read `CLAUDE.md`. Command: `bash scripts/initiate.sh`.
+
+This project is **not** Prodius. Postgres **54339** /
+`fantastic_accounting` only. Never port 54329.
+
+| | This repo | Prodius (ignore / do not touch) |
+|---|---|---|
+| Postgres | `127.0.0.1:54339` | `127.0.0.1:54329` |
+| Database | `fantastic_accounting` | `prodius_accounting` |
+| MCP | `fantastic-accounting` | `prodius-accounting` |
+
+After initiate, leave `fantastic-accounting-db-1` running. Rebuild MCP
+with `pnpm build` in `accounting/` after code changes.
+
+Never: `docker compose down -v`, drop `fantastic_accounting`, or any
+command against 54329.
 
 ## Folders
 
 - `companies/global-fantastic/` and `companies/rare-people/`
-- `01_Declaratii/` — SFS XML/PDF (already imported)
-- `02_Extrase_Bancare/` — bank CSV (empty until Mihail drops files)
+- `01_Declaratii/` — SFS XML/PDF (imported on first run)
+- `02_Extrase_Bancare/` — bank CSV (empty until dropped)
 - `03_Backup_1C/` — sealed `.dt` backups, not parsed
 - `04_Export_1C/` — optional 1C Excel/CSV

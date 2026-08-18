@@ -2,7 +2,7 @@
   "mcpServers": {
     "fantastic-accounting": {
       "command": "node",
-      "args": ["/Users/cristian/Fantastic Account/accounting/dist/src/index.js"],
+      "args": ["REPLACE_WITH_REPO_ROOT/accounting/dist/src/index.js"],
       "env": {
         "DATABASE_URL": "postgres://postgres:postgres@127.0.0.1:54339/fantastic_accounting"
       }
